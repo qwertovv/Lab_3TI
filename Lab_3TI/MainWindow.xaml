@@ -38,7 +38,7 @@
             </StackPanel>
         </GroupBox>
 
-        <!-- Исполнение -->
+        <!-- Исполнение и мониторинг -->
         <GroupBox Grid.Row="1" Header="Исполнение и мониторинг" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -98,26 +98,40 @@
                 <TextBlock x:Name="StatusCompletedText"/>
             </StatusBarItem>
         </StatusBar>
-        <!-- Кнопка справки в правом нижнем углу -->
+
+        <!-- Кнопка справки в правом нижнем углу всего окна -->
         <Button x:Name="HelpButton" 
-        Content="?" 
-        Width="30" 
-        Height="30" 
-        FontSize="16" 
-        FontWeight="Bold"
-        HorizontalAlignment="Right" 
-        VerticalAlignment="Bottom" 
-        Margin="0,0,10,10"
-        Click="HelpButton_Click"
-        ToolTip="Справка по использованию приложения"
-        Background="#0078D4" 
-        Foreground="White"
-        BorderThickness="0">
-            <Button.Resources>
-                <Style TargetType="Border">
-                    <Setter Property="CornerRadius" Value="15"/>
+                Grid.RowSpan="3"
+                Content="?" 
+                Width="35" 
+                Height="35" 
+                FontSize="16" 
+                FontWeight="Bold"
+                HorizontalAlignment="Right" 
+                VerticalAlignment="Bottom" 
+                Margin="0,0,20,20"
+                Click="HelpButton_Click"
+                ToolTip="Справка по использованию приложения"
+                Background="#0078D4" 
+                Foreground="White"
+                BorderThickness="0"
+                Panel.ZIndex="1000">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" 
+                                        CornerRadius="17.5"
+                                        BorderThickness="0">
+                                    <ContentPresenter HorizontalAlignment="Center" 
+                                                    VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
-            </Button.Resources>
+            </Button.Style>
         </Button>
     </Grid>
 </Window>
