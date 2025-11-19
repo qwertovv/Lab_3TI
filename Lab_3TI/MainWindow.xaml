@@ -52,7 +52,7 @@
                     <TextBlock x:Name="ResText" Text="res = 0" Margin="0,5"/>
                     <TextBlock x:Name="VariantText" Text="Вариант-функция: 0" Margin="0,5"/>
 
-                    <!-- Новый блок для отображения найденных элементов -->
+                    <!-- Блок для отображения найденных элементов -->
                     <StackPanel x:Name="FoundElementsPanel" Margin="0,10" Visibility="Collapsed">
                         <TextBlock Text="Найденные элементы > T:" FontWeight="Bold" Margin="0,0,0,5"/>
                         <ListBox x:Name="FoundElementsList" Height="60" BorderThickness="1"/>
@@ -89,8 +89,20 @@
                         </StackPanel>
                     </GroupBox>
 
+                    <!-- Блок логов с кнопкой экспорта -->
                     <GroupBox Header="Логи" Margin="0,10,0,0">
-                        <ListBox x:Name="LogListBox" Height="150"/>
+                        <StackPanel>
+                            <Button x:Name="ExportLogsButton" 
+                                    Content="Экспорт логов" 
+                                    Width="100" 
+                                    HorizontalAlignment="Right" 
+                                    Margin="5,5,5,0"
+                                    Click="ExportLogsButton_Click"
+                                    ToolTip="Сохранить логи в текстовый файл"
+                                    Background="#E6F3FF"
+                                    BorderBrush="#0078D4"/>
+                            <ListBox x:Name="LogListBox" Height="130"/>
+                        </StackPanel>
                     </GroupBox>
                 </StackPanel>
             </Grid>

@@ -4,6 +4,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Threading.Tasks;
+using System.IO;
+using Microsoft.Win32;
+using System.Linq;
 
 namespace LoopInvariantChecker
 {
@@ -27,10 +30,7 @@ namespace LoopInvariantChecker
 
         private void InitializeApp()
         {
-            // Инициализация комбобокса
             ModeComboBox.SelectedIndex = 0;
-
-            // Обновление интерфейса
             UpdateInterface();
             AddLog("Приложение запущено");
         }
@@ -107,10 +107,80 @@ namespace LoopInvariantChecker
             }
         }
 
+        private void HelpButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                HelpWindow helpWindow = new HelpWindow();
+                helpWindow.Owner = this;
+                helpWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                helpWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Не удалось открыть справку: {ex.Message}", "Ошибка",
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ExportLogsButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog();
+                saveFileDialog.Filter = "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*";
+                saveFileDialog.FilterIndex = 1;
+                saveFileDialog.FileName = $"loop_logs_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                saveFileDialog.DefaultExt = ".txt";
+                saveFileDialog.Title = "Экспорт логов";
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    string filePath = saveFileDialog.FileName;
+
+                    var logs = new List<string>();
+                    for (int i = LogListBox.Items.Count - 1; i >= 0; i--)
+                    {
+                        logs.Add(LogListBox.Items[i].ToString());
+                    }
+
+                    var fileContent = new List<string>
+                    {
+                        "=== Логи приложения 'Проверка корректности циклов' ===",
+                        $"Сгенерировано: {DateTime.Now:dd.MM.yyyy HH:mm:ss}",
+                        $"Режим работы: {currentMode}",
+                        $"Размер массива: {array.Length}",
+                        $"Порог T: {threshold}",
+                        $"Текущее состояние: j={j}, res={res}, завершено={isCompleted}",
+                        ""
+                    };
+
+                    fileContent.AddRange(logs);
+
+                    File.WriteAllLines(filePath, fileContent);
+
+                    AddLog($"Логи экспортированы в файл: {Path.GetFileName(filePath)}");
+                    MessageBox.Show($"Логи успешно экспортированы в файл:\n{filePath}",
+                                  "Экспорт завершен",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при экспорте логов: {ex.Message}",
+                              "Ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
+                AddLog($"Ошибка экспорта логов: {ex.Message}");
+            }
+        }
+
         private void InitializeLoop()
         {
             j = 0;
             isCompleted = false;
+            foundElements.Clear();
 
             switch (currentMode)
             {
@@ -134,32 +204,39 @@ namespace LoopInvariantChecker
         {
             if (isCompleted) return;
 
-            // Проверка инварианта до шага
-            bool invariantBefore = CheckInvariant();
-            InvBeforeCircle.Fill = invariantBefore ? Brushes.Green : Brushes.Red;
-            System.Diagnostics.Debug.Assert(invariantBefore, "Инвариант нарушен до выполнения шага");
-
-            // Выполнение шага
-            ExecuteStep();
-
-            // Проверка инварианта после шага
-            bool invariantAfter = CheckInvariant();
-            InvAfterCircle.Fill = invariantAfter ? Brushes.Green : Brushes.Red;
-            System.Diagnostics.Debug.Assert(invariantAfter, "Инвариант нарушен после выполнения шага");
-
-            // Обновление вариант-функции
-            int oldVariant = variantFunction;
-            variantFunction = array.Length - j;
-            AddLog($"Вариант-функция: {oldVariant} -> {variantFunction}");
-
-            // Проверка завершения
-            if (j >= array.Length)
+            try
             {
-                isCompleted = true;
-                AddLog("Цикл завершен");
-            }
+                // Проверка инварианта до шага
+                bool invariantBefore = CheckInvariant();
+                InvBeforeCircle.Fill = invariantBefore ? Brushes.Green : Brushes.Red;
+                System.Diagnostics.Debug.Assert(invariantBefore, "Инвариант нарушен до выполнения шага");
 
-            UpdateInterface();
+                // Выполнение шага
+                ExecuteStep();
+
+                // Проверка инварианта после шага
+                bool invariantAfter = CheckInvariant();
+                InvAfterCircle.Fill = invariantAfter ? Brushes.Green : Brushes.Red;
+                System.Diagnostics.Debug.Assert(invariantAfter, "Инвариант нарушен после выполнения шага");
+
+                // Обновление вариант-функции
+                int oldVariant = variantFunction;
+                variantFunction = array.Length - j;
+                AddLog($"Вариант-функция: {oldVariant} -> {variantFunction}");
+
+                // Проверка завершения
+                if (j >= array.Length)
+                {
+                    isCompleted = true;
+                    AddLog("Цикл завершен");
+                }
+
+                UpdateInterface();
+            }
+            catch (Exception ex)
+            {
+                AddLog($"Ошибка: {ex.Message}");
+            }
         }
 
         private void ExecuteStep()
@@ -177,7 +254,7 @@ namespace LoopInvariantChecker
                     if (array[j] > threshold)
                     {
                         res++;
-                        foundElements.Add(array[j]); // Добавляем элемент в список найденных
+                        foundElements.Add(array[j]);
                         AddLog($"Найден элемент: a[{j}] = {array[j]} > {threshold}");
                     }
                     j++;
@@ -265,6 +342,7 @@ namespace LoopInvariantChecker
             // Инварианты
             UpdateInvariantTexts();
         }
+
         private void UpdateFoundElementsList()
         {
             if (currentMode == "Count > T")
@@ -306,65 +384,15 @@ namespace LoopInvariantChecker
 
         private void AddLog(string message)
         {
-            LogListBox.Items.Insert(0, $"{DateTime.Now:HH:mm:ss} - {message}");
-            if (LogListBox.Items.Count > 50)
-                LogListBox.Items.RemoveAt(LogListBox.Items.Count - 1);
-        }
-        // Добавь эти методы в конец класса MainWindow:
+            string timestamp = DateTime.Now.ToString("HH:mm:ss");
+            string logEntry = $"{timestamp} - {message}";
 
-        public int TestPrefixSum(int[] testArray)
-        {
-            array = testArray;
-            InitializeLoop();
-
-            while (!isCompleted)
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                Step();
-            }
-
-            return res;
-        }
-
-        public int TestCountGreaterThanT(int[] testArray, int testThreshold)
-        {
-            array = testArray;
-            threshold = testThreshold;
-            InitializeLoop();
-
-            while (!isCompleted)
-            {
-                Step();
-            }
-
-            return res;
-        }
-
-        public int TestPrefixMax(int[] testArray)
-        {
-            array = testArray;
-            InitializeLoop();
-
-            while (!isCompleted)
-            {
-                Step();
-            }
-
-            return res;
-        }
-        private void HelpButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                HelpWindow helpWindow = new HelpWindow();
-                helpWindow.Owner = this; // Устанавливаем главное окно как владельца
-                helpWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                helpWindow.ShowDialog(); // Показываем как модальное окно
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Не удалось открыть справку: {ex.Message}", "Ошибка",
-                              MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+                LogListBox.Items.Insert(0, logEntry);
+                if (LogListBox.Items.Count > 100)
+                    LogListBox.Items.RemoveAt(LogListBox.Items.Count - 1);
+            });
         }
     }
 }
