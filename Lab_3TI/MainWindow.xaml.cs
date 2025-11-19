@@ -17,6 +17,7 @@ namespace LoopInvariantChecker
         private bool isCompleted = false;
         private bool isRunning = false;
         private string currentMode = "Prefix Sum";
+        private List<int> foundElements = new List<int>();
 
         public MainWindow()
         {
@@ -174,7 +175,11 @@ namespace LoopInvariantChecker
 
                 case "Count > T":
                     if (array[j] > threshold)
+                    {
                         res++;
+                        foundElements.Add(array[j]); // Добавляем элемент в список найденных
+                        AddLog($"Найден элемент: a[{j}] = {array[j]} > {threshold}");
+                    }
                     j++;
                     break;
 
@@ -246,6 +251,9 @@ namespace LoopInvariantChecker
             ResText.Text = $"res = {res}";
             VariantText.Text = $"Вариант-функция: {variantFunction}";
 
+            // Обновление списка найденных элементов
+            UpdateFoundElementsList();
+
             // Прогресс-бар
             VariantProgress.Maximum = array.Length;
             VariantProgress.Value = variantFunction;
@@ -256,6 +264,22 @@ namespace LoopInvariantChecker
 
             // Инварианты
             UpdateInvariantTexts();
+        }
+        private void UpdateFoundElementsList()
+        {
+            if (currentMode == "Count > T")
+            {
+                FoundElementsPanel.Visibility = Visibility.Visible;
+                FoundElementsList.Items.Clear();
+                foreach (var element in foundElements)
+                {
+                    FoundElementsList.Items.Add(element.ToString());
+                }
+            }
+            else
+            {
+                FoundElementsPanel.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateInvariantTexts()

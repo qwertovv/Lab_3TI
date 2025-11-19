@@ -369,5 +369,6 @@ namespace LoopInvariantChecker.Tests
             }
             return res == expectedMax;
         }
+        
     }
 }

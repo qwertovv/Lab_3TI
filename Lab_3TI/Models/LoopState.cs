@@ -1,4 +1,6 @@
-﻿namespace LoopVerification.Models
+﻿using System.Collections.Generic;
+
+namespace LoopVerification.Models
 {
     public class LoopState
     {
@@ -9,6 +11,7 @@
         public int VariantValue { get; set; }
         public bool InvariantBefore { get; set; }
         public bool InvariantAfter { get; set; }
+        public List<int> FoundElements { get; set; } = new List<int>();
 
         public LoopState()
         {
@@ -19,6 +22,7 @@
             VariantValue = 0;
             InvariantBefore = false;
             InvariantAfter = false;
+
         }
     }
 }
